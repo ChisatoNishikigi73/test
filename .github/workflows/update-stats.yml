@@ -30,12 +30,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
           python get_commit_stats.py
+        continue-on-error: true
+
+      - name: 检查统计结果
+        id: check_stats
+        run: |
+          if [ -f commit_stats.txt ]; then
+            echo "::set-output name=stats_exist::true"
+          else
+            echo "::set-output name=stats_exist::false"
+          fi
 
       - name: 更新 README
+        if: steps.check_stats.outputs.stats_exist == 'true'
         run: |
           sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\n个人代码变更: '"$(cat commit_stats.txt)"'\n```' README.md
 
       - name: 提交更改
+        if: steps.check_stats.outputs.stats_exist == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
