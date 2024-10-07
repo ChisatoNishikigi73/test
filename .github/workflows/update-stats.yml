@@ -14,21 +14,21 @@ jobs:
           fetch-depth: 0  # 获取所有历史记录
           token: ${{ secrets.PAT }}  # 使用PAT进行checkout
 
-      - name: 获取本周个人统计
+      - name: 获取个人所有commit的统计
         run: |
-          STATS=$(git log --author="${{ github.actor }}" --since="1 week ago" --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf "%s 次提交, %s 行新增, %s 行删除, 净变更 %s 行", NR, add, subs, loc }')
+          STATS=$(git log --author="${{ github.actor }}" --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf "%s 次提交, %s 行新增, %s 行删除, 净变更 %s 行", NR, add, subs, loc }')
           echo "STATS<<EOF" >> $GITHUB_ENV
           echo "$STATS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: 更新 README
         run: |
-          sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\n本周个人代码变更: '"$STATS"'\n```' README.md
+          sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\n个人代码变更: '"$STATS"'\n```' README.md
 
       - name: 提交更改
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add README.md
-          git commit -m "更新本周个人代码统计" || exit 0
+          git commit -m "更新个人代码统计" || exit 0
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git
