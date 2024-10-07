@@ -1,9 +1,9 @@
-name: Update Personal Code Stats
+name: 更新个人代码统计
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Run every Sunday at midnight
-  workflow_dispatch:  # Allow manual trigger
+    - cron: '0 0 * * 0'  # 每周日午夜运行
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   update-stats:
@@ -11,34 +11,34 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Fetch all history
-          token: ${{ secrets.PAT }}  # Use PAT for checkout
+          fetch-depth: 0  # 获取所有历史记录
+          token: ${{ secrets.PAT }}  # 使用PAT进行checkout
 
-      - name: Set up Python environment
+      - name: 设置Python环境
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Get personal commit stats
+      - name: 获取个人所有commit的统计
         env:
           GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
           python get_commit_stats.py
 
-      - name: Update README
+      - name: 更新 README
         run: |
-          sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\nPersonal code changes: '"$(cat commit_stats.txt)"'\n```' README.md
+          sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\n个人代码变更: '"$(cat commit_stats.txt)"'\n```' README.md
 
-      - name: Commit changes
+      - name: 提交更改
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add README.md
-          git commit -m "Update personal code stats" || exit 0
+          git commit -m "更新个人代码统计" || exit 0
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git
