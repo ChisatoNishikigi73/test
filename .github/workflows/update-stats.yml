@@ -1,0 +1,33 @@
+name: 更新代码统计
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # 每周日午夜运行
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # 获取所有历史记录
+
+      - name: 获取本周统计
+        run: |
+          STATS=$(git diff --shortstat "@{7 days ago}")
+          echo "STATS<<EOF" >> $GITHUB_ENV
+          echo "$STATS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: 更新 README
+        run: |
+          sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\n本周代码变更: '"$STATS"'\n```' README.md
+
+      - name: 提交更改
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          git commit -m "更新本周代码统计" || exit 0
+          git push
