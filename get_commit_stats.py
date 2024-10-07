@@ -9,16 +9,20 @@ token = os.getenv('GITHUB_TOKEN')
 def get_repos(username):
     url = f'https://api.github.com/users/{username}/repos'
     response = requests.get(url, auth=HTTPBasicAuth(username, token))
-    response.raise_for_status()  # Raise an error for bad status codes
+    response.raise_for_status()
     repos = response.json()
     return [repo['name'] for repo in repos]
 
 def get_commits(username, repo):
     url = f'https://api.github.com/repos/{username}/{repo}/commits'
-    response = requests.get(url, auth=HTTPBasicAuth(username, token))
-    response.raise_for_status()  # Raise an error for bad status codes
-    commits = response.json()
-    return commits
+    try:
+        response = requests.get(url, auth=HTTPBasicAuth(username, token))
+        response.raise_for_status()
+        commits = response.json()
+        return commits
+    except requests.exceptions.HTTPError as e:
+        print(f"警告：无法访问仓库 {repo}：{e}")
+        return []
 
 def main(username):
     if not username:
@@ -32,17 +36,22 @@ def main(username):
     try:
         repos = get_repos(username)
         total_commits = 0
+        accessible_repos = 0
 
         for repo in repos:
             commits = get_commits(username, repo)
-            for commit in commits:
-                if commit['commit']['author']['name'] == username:
-                    total_commits += 1
+            if commits:
+                accessible_repos += 1
+                for commit in commits:
+                    if commit['commit']['author']['name'] == username:
+                        total_commits += 1
 
         with open('commit_stats.txt', 'w') as f:
-            f.write(f'总提交次数: {total_commits}')
+            f.write(f'总提交次数: {total_commits}\n')
+            f.write(f'可访问仓库数: {accessible_repos}/{len(repos)}')
         
         print(f"统计完成。总提交次数：{total_commits}")
+        print(f"可访问仓库数：{accessible_repos}/{len(repos)}")
     except requests.exceptions.HTTPError as e:
         print(f"HTTP错误：{e}")
         print("请确保您的GitHub用户名和令牌正确，并且有足够的权限访问这些仓库。")
@@ -50,6 +59,6 @@ def main(username):
         print(f"发生错误：{e}")
 
 if __name__ == '__main__':
-    print(username)
-    print(token)
+    print(f"使用的用户名: {username}")
+    print(f"令牌是否设置: {bool(token)}")
     main(username)
