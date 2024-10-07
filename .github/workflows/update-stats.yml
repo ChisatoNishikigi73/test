@@ -1,9 +1,9 @@
-name: 更新个人代码统计
+name: Update Personal Code Stats
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # 每周日午夜运行
-  workflow_dispatch:  # 允许手动触发
+    - cron: '0 0 * * 0'  # Run every Sunday at midnight
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
   update-stats:
@@ -11,24 +11,34 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # 获取所有历史记录
-          token: ${{ secrets.PAT }}  # 使用PAT进行checkout
+          fetch-depth: 0  # Fetch all history
+          token: ${{ secrets.PAT }}  # Use PAT for checkout
 
-      - name: 获取个人所有commit的统计
+      - name: Set up Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
         run: |
-          STATS=$(git log --author="${{ github.actor }}" --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf "%s 次提交, %s 行新增, %s 行删除, 净变更 %s 行", NR, add, subs, loc }')
-          echo "STATS<<EOF" >> $GITHUB_ENV
-          echo "$STATS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          python -m pip install --upgrade pip
+          pip install requests
 
-      - name: 更新 README
+      - name: Get personal commit stats
+        env:
+          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
-          sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\n个人代码变更: '"$STATS"'\n```' README.md
+          python get_commit_stats.py
 
-      - name: 提交更改
+      - name: Update README
+        run: |
+          sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\nPersonal code changes: '"$(cat commit_stats.txt)"'\n```' README.md
+
+      - name: Commit changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add README.md
-          git commit -m "更新个人代码统计" || exit 0
+          git commit -m "Update personal code stats" || exit 0
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git
