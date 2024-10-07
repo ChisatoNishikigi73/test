@@ -46,7 +46,7 @@ jobs:
       - name: 更新 README
         if: steps.check_stats.outputs.stats_exist == 'true'
         run: |
-          sed -i '/<!-- CODE_CHANGES -->/c\<!-- CODE_CHANGES -->\n```\n个人代码变更: '"$(cat commit_stats.txt)"'\n```' README.md
+          python update_readme.py
 
       - name: 提交更改
         if: steps.check_stats.outputs.stats_exist == 'true'
@@ -55,4 +55,4 @@ jobs:
           git config --local user.name "GitHub Action"
           git add README.md
           git commit -m "更新个人代码统计" || exit 0
-          git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git
+          git push
