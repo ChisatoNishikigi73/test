@@ -29,6 +29,8 @@ jobs:
           GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
+          echo "GITHUB_USERNAME: $GITHUB_USERNAME"
+          echo "GITHUB_TOKEN 是否设置: ${{ secrets.PAT != '' }}"
           python get_commit_stats.py
         continue-on-error: true
 
