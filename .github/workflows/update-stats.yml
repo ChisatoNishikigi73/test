@@ -26,7 +26,7 @@ jobs:
 
       - name: 获取个人所有commit的统计
         env:
-          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+          GITHUB_USERNAME: ${{ secrets.USERNAME }}
           GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
           echo "GITHUB_USERNAME: $GITHUB_USERNAME"
